@@ -1,0 +1,12 @@
+{
+  "name": "Aquickah",
+  "short_name": "Aquickah",
+  "description": "A neighbor-to-neighbor network for rides, food, and favors with a merit system that gamifies starting local businesses.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#14121a",
+  "theme_color": "#14121a",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
