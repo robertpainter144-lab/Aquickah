@@ -14,6 +14,9 @@
   --color-ember-soft: #5a3a26;
   --color-gold: #c9a227;
   --color-moss: #7fae6c;
+  --color-cranberry: #b23a53;
+  --color-hydrangea: #7b86c9;
+  --color-trim: #f4ead9;
 }
 
 html {
@@ -48,6 +51,48 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-ember);
   outline-offset: 2px;
+}
+
+/* Gingerbread-trim scallop, laid along the bottom edge of sticky headers */
+.scallop-trim {
+  height: 10px;
+  background-image: radial-gradient(circle at 7px 0, transparent 7px, var(--color-trim) 7.5px);
+  background-size: 14px 10px;
+  background-repeat: repeat-x;
+  background-position: bottom;
+  opacity: 0.9;
+}
+
+/* Lobster-buoy stripe ring for the primary floating action */
+.buoy-fab {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--color-cranberry) 0px,
+    var(--color-cranberry) 7px,
+    var(--color-trim) 7px,
+    var(--color-trim) 11px,
+    var(--color-hydrangea) 11px,
+    var(--color-hydrangea) 18px,
+    var(--color-trim) 18px,
+    var(--color-trim) 22px
+  );
+  border: 2px solid var(--color-trim);
+}
+
+@keyframes lighthouse-sweep {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: rotate(-8deg) scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: rotate(8deg) scale(1.05);
+  }
+}
+
+.lighthouse-glow {
+  animation: lighthouse-sweep 7s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

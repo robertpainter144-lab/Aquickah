@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Field, Sheet, inputClass } from '../components/Sheet'
+import { Hydrangea, ScallopTrim } from '../components/Decorative'
 import type { User } from '../types'
 
 function LanternEntry({
@@ -79,12 +80,16 @@ export function LanternScreen({
 
   return (
     <div className="pb-24">
-      <div className="sticky top-0 z-10 border-b border-hairline bg-ink/95 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+16px)] backdrop-blur">
-        <h1 className="font-display text-2xl font-medium text-paper">The Lantern List</h1>
+      <div className="sticky top-0 z-10 bg-ink/95 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+16px)] backdrop-blur">
+        <div className="flex items-center gap-2">
+          <h1 className="font-display text-2xl font-medium text-paper">The Lantern List</h1>
+          <Hydrangea className="h-8 w-8" />
+        </div>
         <p className="mt-0.5 text-xs text-muted">
           Neighbors who'd welcome company this season. No addresses, no pressure — just a note and a door that's open.
         </p>
       </div>
+      <ScallopTrim />
 
       <div className="flex flex-col gap-3 px-4 pt-4">
         <button

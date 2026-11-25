@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Field, Sheet, inputClass } from '../components/Sheet'
+import { LighthouseGlow, ScallopTrim } from '../components/Decorative'
 import { StatusPill } from '../components/Pills'
 import type { HelpRequest, RequestType, Town, User } from '../types'
 import { TOWNS } from '../types'
 
-const TYPE_META: Record<RequestType, { label: string; icon: string }> = {
-  ride: { label: 'Wagon Call', icon: '🐎' },
-  delivery: { label: 'Hearth Delivery', icon: '🥖' },
-  favor: { label: 'Barnraising', icon: '🤝' },
+const TYPE_META: Record<RequestType, { label: string; icon: string; bar: string; chip: string }> = {
+  ride: { label: 'Wagon Call', icon: '⛵', bar: 'bg-hydrangea', chip: 'bg-hydrangea/15 text-hydrangea' },
+  delivery: { label: 'Hearth Delivery', icon: '🥖', bar: 'bg-cranberry', chip: 'bg-cranberry/15 text-cranberry' },
+  favor: { label: 'Barnraising', icon: '🤝', bar: 'bg-moss', chip: 'bg-moss/15 text-moss' },
 }
 
 function timeAgo(ts: number) {
@@ -35,9 +36,11 @@ function RequestCard({
 }) {
   const meta = TYPE_META[request.type]
   return (
-    <article className="rounded-2xl border border-hairline bg-surface p-4">
+    <article className="overflow-hidden rounded-2xl border border-hairline bg-surface">
+      <div className={`h-1.5 ${meta.bar}`} aria-hidden />
+      <div className="p-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ember">
+        <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${meta.chip}`}>
           <span aria-hidden>{meta.icon}</span>
           {meta.label}
         </div>
@@ -86,6 +89,7 @@ function RequestCard({
           </button>
         )}
       </div>
+      </div>
     </article>
   )
 }
@@ -130,30 +134,34 @@ export function FeedScreen({
 
   return (
     <div className="pb-24">
-      <div className="sticky top-0 z-10 border-b border-hairline bg-ink/95 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+16px)] backdrop-blur">
-        <div className="flex items-center justify-between">
-          <h1 className="font-display text-2xl font-medium text-paper">Aquickah</h1>
-          <span className="text-xl" aria-hidden>
-            🏮
-          </span>
+      <div className="sticky top-0 z-10 overflow-hidden bg-ink/95 pb-3 pt-[calc(env(safe-area-inset-top)+16px)] backdrop-blur">
+        <LighthouseGlow />
+        <div className="relative px-4">
+          <div className="flex items-center justify-between">
+            <h1 className="font-display text-2xl font-medium text-paper">Aquickah</h1>
+            <span className="text-xl" aria-hidden>
+              🏮
+            </span>
+          </div>
+          <p className="mt-0.5 text-xs text-ember">Winter Session — the Lantern List is lit through Jan 15</p>
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {(['all', 'ride', 'delivery', 'favor'] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold capitalize ${
+                  filter === f
+                    ? 'border-ember bg-ember/15 text-ember'
+                    : 'border-hairline text-muted'
+                }`}
+              >
+                {f === 'all' ? 'All' : TYPE_META[f].label}
+              </button>
+            ))}
+          </div>
         </div>
-        <p className="mt-0.5 text-xs text-ember">Winter Session — the Lantern List is lit through Jan 15</p>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {(['all', 'ride', 'delivery', 'favor'] as const).map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setFilter(f)}
-              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold capitalize ${
-                filter === f
-                  ? 'border-ember bg-ember/15 text-ember'
-                  : 'border-hairline text-muted'
-              }`}
-            >
-              {f === 'all' ? 'All' : TYPE_META[f].label}
-            </button>
-          ))}
-        </div>
+        <ScallopTrim />
       </div>
 
       <div className="flex flex-col gap-3 px-4 pt-4">
@@ -177,9 +185,11 @@ export function FeedScreen({
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Post a request"
-        className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full bg-ember text-2xl text-ink shadow-lg"
+        className="buoy-fab fixed bottom-24 right-5 h-14 w-14 rounded-full p-1.5 shadow-lg"
       >
-        +
+        <span className="flex h-full w-full items-center justify-center rounded-full bg-ember text-2xl font-semibold text-ink">
+          +
+        </span>
       </button>
 
       <Sheet open={open} title="Ask the neighborhood" onClose={() => setOpen(false)}>

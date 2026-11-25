@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { TIERS, tierFor, type AquickahState } from '../types'
 import { TierPill } from '../components/Pills'
 import { Field, inputClass } from '../components/Sheet'
+import { ScallopTrim } from '../components/Decorative'
 
 export function ProfileScreen({ state }: { state: AquickahState }) {
   const user = state.users.find((u) => u.id === state.currentUserId)!
@@ -19,13 +20,14 @@ export function ProfileScreen({ state }: { state: AquickahState }) {
 
   return (
     <div className="pb-24">
-      <div className="sticky top-0 z-10 border-b border-hairline bg-ink/95 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+16px)] backdrop-blur">
+      <div className="sticky top-0 z-10 bg-ink/95 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+16px)] backdrop-blur">
         <h1 className="font-display text-2xl font-medium text-paper">Profile</h1>
       </div>
+      <ScallopTrim />
 
       <div className="px-4 pt-4">
         <div className="flex items-center gap-4 rounded-2xl border border-hairline bg-surface p-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ember/20 font-display text-lg text-ember">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-gold/60 bg-ember/20 font-display text-lg text-ember">
             {user.initials}
           </div>
           <div className="flex-1">

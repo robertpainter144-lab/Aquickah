@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Field, Sheet, inputClass } from '../components/Sheet'
+import { ScallopTrim } from '../components/Decorative'
 import { StagePill } from '../components/Pills'
 import type { GrangeProject, User } from '../types'
 
@@ -26,7 +27,9 @@ function ProjectCard({
   const canTestify = hasBacked || hasSkillShared
 
   return (
-    <article className="rounded-2xl border border-hairline bg-surface p-4">
+    <article className="overflow-hidden rounded-2xl border border-hairline bg-surface">
+      <div className={`h-1.5 ${project.isVenture ? 'bg-gold' : 'bg-hydrangea'}`} aria-hidden />
+      <div className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted">
           {owner?.name ?? 'Neighbor'} · {owner?.town}
@@ -130,6 +133,7 @@ function ProjectCard({
           ))}
         </ul>
       )}
+      </div>
     </article>
   )
 }
@@ -172,13 +176,14 @@ export function GrangeScreen({
 
   return (
     <div className="pb-24">
-      <div className="sticky top-0 z-10 border-b border-hairline bg-ink/95 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+16px)] backdrop-blur">
+      <div className="sticky top-0 z-10 bg-ink/95 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+16px)] backdrop-blur">
         <h1 className="font-display text-2xl font-medium text-paper">The Grange</h1>
         <p className="mt-0.5 text-xs text-muted">
           Projects, big and small — and{' '}
           <span className="font-semibold text-ember">{ventureCount} island ventures</span> sprouted this season.
         </p>
       </div>
+      <ScallopTrim />
 
       <div className="flex flex-col gap-3 px-4 pt-4">
         {projects.map((p) => (
@@ -198,9 +203,11 @@ export function GrangeScreen({
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Post a project"
-        className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full bg-ember text-2xl text-ink shadow-lg"
+        className="buoy-fab fixed bottom-24 right-5 h-14 w-14 rounded-full p-1.5 shadow-lg"
       >
-        +
+        <span className="flex h-full w-full items-center justify-center rounded-full bg-ember text-2xl font-semibold text-ink">
+          +
+        </span>
       </button>
 
       <Sheet open={open} title="Bring something to the Grange" onClose={() => setOpen(false)}>

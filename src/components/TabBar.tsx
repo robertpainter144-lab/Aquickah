@@ -1,15 +1,20 @@
+import { ScallopTrim } from './Decorative'
+
 export type Tab = 'feed' | 'grange' | 'lantern' | 'profile'
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'feed', label: 'Feed', icon: '🌾' },
+  { key: 'feed', label: 'Feed', icon: '🏘️' },
   { key: 'grange', label: 'Grange', icon: '🔨' },
   { key: 'lantern', label: 'Lantern', icon: '🏮' },
-  { key: 'profile', label: 'Profile', icon: '🜂' },
+  { key: 'profile', label: 'Profile', icon: '🧭' },
 ]
 
 export function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed inset-x-0 bottom-0 z-20 bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+      <div className="rotate-180">
+        <ScallopTrim />
+      </div>
       <div className="mx-auto flex max-w-md">
         {TABS.map((t) => (
           <button
