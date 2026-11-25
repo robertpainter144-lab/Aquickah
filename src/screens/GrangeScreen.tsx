@@ -61,11 +61,11 @@ function ProjectCard({
             </button>
           )}
           {project.isVenture && (
-            <details className="w-full">
+            <details>
               <summary className="cursor-pointer list-none rounded-full border border-hairline px-3 py-1.5 text-xs font-semibold text-muted inline-block">
                 Skill-Share
               </summary>
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 flex w-[max(260px,60vw)] max-w-full gap-2">
                 <input
                   className={inputClass}
                   value={skill}
@@ -96,11 +96,11 @@ function ProjectCard({
             </button>
           )}
           {project.isVenture && canTestify && (
-            <details className="w-full">
+            <details>
               <summary className="cursor-pointer list-none rounded-full border border-hairline px-3 py-1.5 text-xs font-semibold text-muted inline-block">
                 Testify
               </summary>
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 flex w-[max(260px,60vw)] max-w-full gap-2">
                 <input
                   className={inputClass}
                   value={testimony}
