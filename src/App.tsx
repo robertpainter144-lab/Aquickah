@@ -3,6 +3,7 @@ import { TabBar, type Tab } from './components/TabBar'
 import { useAquickah } from './hooks/useAquickah'
 import { FeedScreen } from './screens/FeedScreen'
 import { GrangeScreen } from './screens/GrangeScreen'
+import { IdentityScreen } from './screens/IdentityScreen'
 import { LanternScreen } from './screens/LanternScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
 
@@ -10,11 +11,16 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('feed')
   const {
     state,
+    error,
+    myUserId,
     currentUser,
+    joinAsNew,
+    setMyUserId,
     addRequest,
     claimRequest,
     completeRequest,
     addGrangeProject,
+    updateProfile,
     backVenture,
     skillShareVenture,
     testifyVenture,
@@ -22,13 +28,21 @@ export default function App() {
     lightLantern,
   } = useAquickah()
 
+  if (!myUserId || !state || !currentUser) {
+    return (
+      <div className="mx-auto min-h-svh max-w-md bg-ink">
+        <IdentityScreen state={state} error={error} onPick={setMyUserId} onJoin={joinAsNew} />
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto min-h-svh max-w-md bg-ink">
       {tab === 'feed' && (
         <FeedScreen
           requests={state.requests}
           users={state.users}
-          currentUserId={state.currentUserId}
+          currentUserId={myUserId}
           onClaim={claimRequest}
           onComplete={completeRequest}
           onAdd={addRequest}
@@ -38,7 +52,7 @@ export default function App() {
         <GrangeScreen
           projects={state.projects}
           users={state.users}
-          currentUserId={state.currentUserId}
+          currentUserId={myUserId}
           onBack={backVenture}
           onSkillShare={skillShareVenture}
           onTestify={testifyVenture}
@@ -53,7 +67,7 @@ export default function App() {
           onToggleOptIn={toggleLanternOptIn}
         />
       )}
-      {tab === 'profile' && <ProfileScreen state={state} />}
+      {tab === 'profile' && <ProfileScreen state={state} myUserId={myUserId} onSaveProfile={updateProfile} />}
 
       <TabBar active={tab} onChange={setTab} />
     </div>

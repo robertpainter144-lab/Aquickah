@@ -66,7 +66,6 @@ export interface User {
 }
 
 export interface AquickahState {
-  currentUserId: string
   users: User[]
   requests: HelpRequest[]
   projects: GrangeProject[]

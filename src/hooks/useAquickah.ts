@@ -1,206 +1,156 @@
-import { useCallback, useEffect, useState } from 'react'
-import { SEED_STATE } from '../data/seed'
-import type {
-  AquickahState,
-  GrangeProject,
-  HelpRequest,
-  RequestType,
-  Town,
-} from '../types'
-import { stageForBackers } from '../types'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import * as api from '../api'
+import type { AquickahState, RequestType, Town } from '../types'
 
-const STORAGE_KEY = 'aquickah-state-v1'
-
-function load(): AquickahState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as AquickahState
-  } catch {
-    // fall through to seed
-  }
-  return structuredClone(SEED_STATE)
-}
+const IDENTITY_KEY = 'aquickah-my-user-id'
+const POLL_MS = 4000
 
 export function useAquickah() {
-  const [state, setState] = useState<AquickahState>(load)
+  const [state, setState] = useState<AquickahState | null>(null)
+  const [myUserId, setMyUserIdState] = useState<string | null>(() => localStorage.getItem(IDENTITY_KEY))
+  const [error, setError] = useState<string | null>(null)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-  }, [state])
-
-  const currentUser = state.users.find((u) => u.id === state.currentUserId)!
-
-  const award = useCallback((userId: string, points: number) => {
-    setState((s) => ({
-      ...s,
-      users: s.users.map((u) =>
-        u.id === userId ? { ...u, hearthPoints: u.hearthPoints + points } : u,
-      ),
-    }))
+  const refresh = useCallback(async () => {
+    try {
+      const data = await api.fetchState()
+      setState(data)
+      setError(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not reach the Aquickah server')
+    }
   }, [])
 
+  useEffect(() => {
+    refresh()
+    pollRef.current = setInterval(refresh, POLL_MS)
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current)
+    }
+  }, [refresh])
+
+  const setMyUserId = useCallback((id: string) => {
+    localStorage.setItem(IDENTITY_KEY, id)
+    setMyUserIdState(id)
+  }, [])
+
+  const joinAsNew = useCallback(
+    async (name: string, town: Town) => {
+      const user = await api.createUser(name, town)
+      await refresh()
+      setMyUserId((user as { id: string }).id)
+    },
+    [refresh, setMyUserId],
+  )
+
+  const currentUser = state && myUserId ? state.users.find((u) => u.id === myUserId) : undefined
+
   const addRequest = useCallback(
-    (data: { type: RequestType; title: string; description: string; town: Town; urgent?: string }) => {
-      const hearthValue = data.type === 'favor' ? 8 : 5
-      const req: HelpRequest = {
-        id: `r-${Date.now()}`,
-        type: data.type,
-        title: data.title,
-        description: data.description,
-        town: data.town,
-        urgent: data.urgent,
-        requesterId: state.currentUserId,
-        status: 'open',
-        hearthValue,
-        createdAt: Date.now(),
-      }
-      setState((s) => ({ ...s, requests: [req, ...s.requests] }))
+    async (data: { type: RequestType; title: string; description: string; town: Town; urgent?: string }) => {
+      if (!myUserId) return
+      await api.createRequest({ userId: myUserId, ...data })
+      await refresh()
     },
-    [state.currentUserId],
+    [myUserId, refresh],
   )
 
-  const claimRequest = useCallback(
-    (id: string) => {
-      setState((s) => ({
-        ...s,
-        requests: s.requests.map((r) =>
-          r.id === id ? { ...r, status: 'claimed', claimedById: s.currentUserId } : r,
-        ),
-      }))
+  const doClaimRequest = useCallback(
+    async (id: string) => {
+      if (!myUserId) return
+      await api.claimRequest(id, myUserId)
+      await refresh()
     },
-    [],
+    [myUserId, refresh],
   )
 
-  const completeRequest = useCallback(
-    (id: string) => {
-      const req = state.requests.find((r) => r.id === id)
-      if (!req || !req.claimedById) return
-      setState((s) => ({
-        ...s,
-        requests: s.requests.map((r) => (r.id === id ? { ...r, status: 'done' } : r)),
-      }))
-      award(req.claimedById, req.hearthValue)
+  const doCompleteRequest = useCallback(
+    async (id: string) => {
+      if (!myUserId) return
+      await api.completeRequest(id, myUserId)
+      await refresh()
     },
-    [state.requests, award],
+    [myUserId, refresh],
   )
 
   const addGrangeProject = useCallback(
-    (data: { title: string; description: string; helpWanted: string; isVenture: boolean }) => {
-      const project: GrangeProject = {
-        id: `g-${Date.now()}`,
-        ownerId: state.currentUserId,
-        title: data.title,
-        description: data.description,
-        helpWanted: data.helpWanted,
-        isVenture: data.isVenture,
-        stage: data.isVenture ? 'seed' : undefined,
-        backers: [],
-        skillShares: [],
-        testimonials: [],
-        createdAt: Date.now(),
-      }
-      setState((s) => ({ ...s, projects: [project, ...s.projects] }))
+    async (data: { title: string; description: string; helpWanted: string; isVenture: boolean }) => {
+      if (!myUserId) return
+      await api.createProject({ userId: myUserId, ...data })
+      await refresh()
     },
-    [state.currentUserId],
+    [myUserId, refresh],
   )
 
-  const backVenture = useCallback(
-    (projectId: string) => {
-      const project = state.projects.find((p) => p.id === projectId)
-      if (!project || project.backers.includes(state.currentUserId)) return
-      setState((s) => ({
-        ...s,
-        projects: s.projects.map((p) => {
-          if (p.id !== projectId) return p
-          const backers = [...p.backers, s.currentUserId]
-          return { ...p, backers, stage: p.isVenture ? stageForBackers(backers.length) : p.stage }
-        }),
-      }))
-      award(state.currentUserId, 6)
-      award(project.ownerId, 6)
+  const doBackVenture = useCallback(
+    async (projectId: string) => {
+      if (!myUserId) return
+      await api.backProject(projectId, myUserId)
+      await refresh()
     },
-    [state.projects, state.currentUserId, award],
+    [myUserId, refresh],
   )
 
-  const skillShareVenture = useCallback(
-    (projectId: string, skill: string) => {
-      const project = state.projects.find((p) => p.id === projectId)
-      if (!project) return
-      setState((s) => ({
-        ...s,
-        projects: s.projects.map((p) =>
-          p.id === projectId
-            ? { ...p, skillShares: [...p.skillShares, { userId: s.currentUserId, skill }] }
-            : p,
-        ),
-      }))
-      award(state.currentUserId, 8)
-      award(project.ownerId, 4)
+  const doSkillShareVenture = useCallback(
+    async (projectId: string, skill: string) => {
+      if (!myUserId) return
+      await api.skillShareProject(projectId, myUserId, skill)
+      await refresh()
     },
-    [state.projects, state.currentUserId, award],
+    [myUserId, refresh],
   )
 
-  const testifyVenture = useCallback(
-    (projectId: string, text: string) => {
-      const project = state.projects.find((p) => p.id === projectId)
-      if (!project) return
-      const hasStanding =
-        project.backers.includes(state.currentUserId) ||
-        project.skillShares.some((s) => s.userId === state.currentUserId)
-      if (!hasStanding) return
-      setState((s) => ({
-        ...s,
-        projects: s.projects.map((p) =>
-          p.id === projectId
-            ? { ...p, testimonials: [...p.testimonials, { userId: s.currentUserId, text }] }
-            : p,
-        ),
-      }))
-      award(project.ownerId, 5)
+  const doTestifyVenture = useCallback(
+    async (projectId: string, text: string) => {
+      if (!myUserId) return
+      await api.testifyProject(projectId, myUserId, text)
+      await refresh()
     },
-    [state.projects, state.currentUserId, award],
+    [myUserId, refresh],
   )
 
-  const toggleLanternOptIn = useCallback(
-    (note: string) => {
-      setState((s) => ({
-        ...s,
-        users: s.users.map((u) =>
-          u.id === s.currentUserId
-            ? { ...u, lanternOptIn: !u.lanternOptIn, lanternNote: note }
-            : u,
-        ),
-      }))
+  const doUpdateProfile = useCallback(
+    async (offerings: string, needs: string) => {
+      if (!myUserId) return
+      await api.updateProfile(myUserId, offerings, needs)
+      await refresh()
     },
-    [],
+    [myUserId, refresh],
   )
 
-  const lightLantern = useCallback(
-    (toUserId: string, message: string) => {
-      setState((s) => ({
-        ...s,
-        lanternActions: [
-          { id: `l-${Date.now()}`, fromUserId: s.currentUserId, toUserId, message, createdAt: Date.now() },
-          ...s.lanternActions,
-        ],
-      }))
-      award(state.currentUserId, 12)
-      award(toUserId, 12)
+  const doToggleLanternOptIn = useCallback(
+    async (note: string) => {
+      if (!myUserId) return
+      await api.toggleLanternOptIn(myUserId, note)
+      await refresh()
     },
-    [state.currentUserId, award],
+    [myUserId, refresh],
+  )
+
+  const doLightLantern = useCallback(
+    async (toUserId: string, message: string) => {
+      if (!myUserId) return
+      await api.lightLantern(myUserId, toUserId, message)
+      await refresh()
+    },
+    [myUserId, refresh],
   )
 
   return {
     state,
+    error,
+    myUserId,
     currentUser,
+    joinAsNew,
+    setMyUserId,
     addRequest,
-    claimRequest,
-    completeRequest,
+    claimRequest: doClaimRequest,
+    completeRequest: doCompleteRequest,
     addGrangeProject,
-    backVenture,
-    skillShareVenture,
-    testifyVenture,
-    toggleLanternOptIn,
-    lightLantern,
+    updateProfile: doUpdateProfile,
+    backVenture: doBackVenture,
+    skillShareVenture: doSkillShareVenture,
+    testifyVenture: doTestifyVenture,
+    toggleLanternOptIn: doToggleLanternOptIn,
+    lightLantern: doLightLantern,
   }
 }

@@ -4,12 +4,31 @@ import { TierPill } from '../components/Pills'
 import { Field, inputClass } from '../components/Sheet'
 import { ScallopTrim } from '../components/Decorative'
 
-export function ProfileScreen({ state }: { state: AquickahState }) {
-  const user = state.users.find((u) => u.id === state.currentUserId)!
+export function ProfileScreen({
+  state,
+  myUserId,
+  onSaveProfile,
+}: {
+  state: AquickahState
+  myUserId: string
+  onSaveProfile: (offerings: string, needs: string) => Promise<void>
+}) {
+  const user = state.users.find((u) => u.id === myUserId)!
   const tier = tierFor(user.hearthPoints)
   const nextTier = TIERS.find((t) => t.min > user.hearthPoints)
   const [offerings, setOfferings] = useState(user.offerings)
   const [needs, setNeeds] = useState(user.needs)
+  const [saving, setSaving] = useState(false)
+  const dirty = offerings !== user.offerings || needs !== user.needs
+
+  async function save() {
+    setSaving(true)
+    try {
+      await onSaveProfile(offerings, needs)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const given = [
     ...state.requests.filter((r) => r.claimedById === user.id && r.status === 'done'),
@@ -82,7 +101,16 @@ export function ProfileScreen({ state }: { state: AquickahState }) {
           <Field label="What I could use">
             <textarea className={inputClass} rows={2} value={needs} onChange={(e) => setNeeds(e.target.value)} />
           </Field>
-          <p className="text-[11px] text-muted">Changes here are local to this device for now — this is a proof of concept.</p>
+          {dirty && (
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="w-full rounded-xl bg-ember py-2.5 text-sm font-semibold text-ink disabled:opacity-50"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          )}
         </div>
       </div>
     </div>
